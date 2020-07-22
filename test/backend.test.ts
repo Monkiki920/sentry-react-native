@@ -1,5 +1,5 @@
 import { ReactNativeBackend } from "../src/js/backend";
-import { SentryError } from "@sentry/utils";
+import * as RN from "react-native";
 
 const EXAMPLE_DSN =
   "https://6890c2f6677340daa4804f8194804ea2@o19635.ingest.sentry.io/148053";
@@ -24,6 +24,9 @@ jest.mock(
     Platform: {
       OS: "mock"
     },
+    LogBox:{
+      ignoreLogs: jest.fn(),
+    },
     YellowBox: {
       ignoreWarnings: jest.fn()
     }
@@ -41,6 +44,7 @@ describe("Tests ReactNativeBackend", () => {
       });
 
       await expect(backend.eventFromMessage("test")).resolves.toBeDefined();
+      await expect(RN.LogBox.ignoreLogs).toBeCalled();
     });
 
     test("invalid dsn is thrown", () => {
@@ -66,6 +70,18 @@ describe("Tests ReactNativeBackend", () => {
 
         return expect(backend.eventFromMessage("test")).resolves.toBeDefined();
       }).not.toThrow();
+    });
+    
+    test("falls back to YellowBox if no LogBox", async () => {
+      RN.LogBox = undefined;
+
+      const backend = new ReactNativeBackend({
+        dsn: EXAMPLE_DSN,
+        enableNative: true,
+      });
+
+      await expect(backend.eventFromMessage("test")).resolves.toBeDefined();
+      await expect(RN.YellowBox.ignoreWarnings).toBeCalled();
     });
   });
 
