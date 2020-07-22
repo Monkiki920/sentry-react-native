@@ -2,7 +2,7 @@ import { BrowserOptions, Transports } from "@sentry/browser";
 import { BrowserBackend } from "@sentry/browser/dist/backend";
 import { BaseBackend, NoopTransport } from "@sentry/core";
 import { Event, EventHint, Severity, Transport } from "@sentry/types";
-import { Alert, YellowBox } from "react-native";
+import { Alert, YellowBox ,LogBox} from "react-native";
 
 import { NativeTransport } from "./transports/native";
 import { NATIVE } from "./wrapper";
@@ -49,8 +49,13 @@ export class ReactNativeBackend extends BaseBackend<BrowserOptions> {
     this._browserBackend = new BrowserBackend(_options);
 
     // This is a workaround for now using fetch on RN, this is a known issue in react-native and only generates a warning
-    YellowBox.ignoreWarnings(["Require cycle:"]);
-
+    ///兼容RN 0.63.1
+    if (LogBox) {
+       // tslint:disable-next-line: no-unsafe-any
+       LogBox.ignoreLogs(["Require cycle:"]);
+    } else {
+       YellowBox.ignoreWarnings(["Require cycle:"]);
+    }
     // tslint:disable-next-line: no-floating-promises
     this._startWithOptions();
   }
